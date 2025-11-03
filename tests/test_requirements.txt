@@ -1,0 +1,15 @@
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+
+# Additional tools
+# pytest-xdist>=3.3.0      # Parallel test execution
+# pytest-benchmark>=4.0.0   # Performance testing
+# pytest-html>=3.2.0       # HTML test reports
+# factory-boy>=3.3.0        # Test data generation
+# faker>=19.0.0             # Fake data generation
+
+# For web testing
+# pytest-django>=4.5.0      # Django integration
+# pytest-flask>=1.2.0       # Flask integration
+# requests-mock>=1.11.0     # HTTP mocking

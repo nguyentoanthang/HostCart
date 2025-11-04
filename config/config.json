@@ -1,0 +1,127 @@
+{
+    "igdb": {
+        "token_timestamp": "",
+        "data_refresh_limit": 1
+    },
+    "server": {
+        // "host": "0.0.0.0",
+        // "port": 8000,
+        // "debug": false,
+        // "cors_origins": ["*"],
+        // "cors_allow_credentials": true,
+        // "cors_allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        // "cors_allow_headers": ["*"],
+        // "api_prefix": "/api/v1",
+        // "docs_url": "/docs",
+        // "redoc_url": "/redoc",
+        // "max_request_size": 16777216
+    },
+    "web_ui": {
+        // "title": "HostCart Game Collection",
+        // "description": "Self-hosted game collection manager",
+        // "theme": "dark",
+        // "items_per_page": 20,
+        // "default_view": "cards",
+        // "enable_search": true,
+        // "enable_filters": true,
+        // "show_stats": true,
+        // "auto_refresh_interval": 300
+    },
+    "database": {
+        // "db_file": "/app/data/hostcart.db",
+        // "backup_enabled": true,
+        // "backup_path": "/app/data/backups",
+        // "backup_interval_hours": 24,
+        // "backup_retention_days": 30
+    },
+    "logging": {
+        "level": "INFO",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "file": "logs/slaanesh.log",
+        "max_file_size_mb": 10,
+        "backup_count": 5,
+        "console_output": true
+    },
+    "security": {
+        "secret_key": "",
+        "algorithm": "HS256",
+        "access_token_expire_minutes": 30,
+        "refresh_token_expire_days": 7,
+        "enable_authentication": false,
+        "bcrypt_rounds": 12
+    },
+    "features": {
+        "wishlist": {
+            "enabled": true,
+            "max_items": 1000
+        },
+        "playtime_tracking": {
+            "enabled": true,
+            "auto_detect": false,
+            "manual_entry": true
+        },
+        "ratings": {
+            "enabled": true,
+            "scale": 10,
+            "allow_half_ratings": true
+        },
+        "reviews": {
+            "enabled": true,
+            "max_length": 2000
+        },
+        "tags": {
+            "enabled": true,
+            "custom_tags": true,
+            "max_tags_per_game": 10
+        },
+        "achievements": {
+            "enabled": true,
+            "track_progress": true
+        }
+    },
+    "cache": {
+        "enabled": true,
+        "ttl_seconds": 3600,
+        "max_size_mb": 100,
+        "cleanup_interval_minutes": 30
+    },
+    "export": {
+        "formats": ["json", "csv", "xlsx"],
+        "include_images": false,
+        "max_export_items": 10000
+    },
+    "import": {
+        "allowed_formats": ["json", "csv"],
+        "max_file_size_mb": 50,
+        "validate_data": true,
+        "skip_duplicates": true
+    },
+    "platforms": [
+        "PC (Microsoft Windows)",
+        "PlayStation 5",
+        "PlayStation 4", 
+        "Xbox Series X|S",
+        "Xbox One",
+        "Nintendo Switch",
+        "Nintendo Switch 2",
+        "Steam Deck",
+        "iOS",
+        "Android",
+        "Mac",
+        "Linux"
+    ],
+    "game_status": [
+        "Unplayed",
+        "Playing",
+        "Completed",
+        "On Hold",
+        "Dropped",
+        "Replay"
+    ],
+    "docker": {
+        "data_volume": "/app/data",
+        "config_volume": "/app/config",
+        "logs_volume": "/app/logs",
+        "timezone": "UTC"
+    }
+}

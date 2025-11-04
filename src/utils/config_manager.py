@@ -3,27 +3,55 @@ import json
 import os
 from typing import Dict, Any, Optional, List, Union
 
-# Config files
+# Config file
 CONFIG_FILE = os.path.normpath("../../config/config.json")
+# Database file
+DATABASE_FILE = os.path.normpath("../../database/data.db")
+# Host
+HOST = "0.0.0.0"
+# Port
+PORT = 8000
 
 @dataclass
 class IGDBConfig:
-    client_id: str = ""
-    client_secret: str = ""
-    auth_token: str = ""
-    token_timestamp: str = ""
-    data_refresh_limit: int = 1
+    _client_id: Optional[str]
+    _client_secret: Optional[str]
+    _auth_token: Optional[str]
+    token_timestamp: str
+    data_refresh_limit: int
 
     def __init__(self, token_timestamp: str = "", data_refresh_limit: int = 1, **kwargs):
         # Only unpack the non-sensitive fields from config
         self.token_timestamp = token_timestamp
         self.data_refresh_limit = data_refresh_limit
+        
+        self.__post_init__()
 
     def __post_init__(self):
         # Override with environment variables if they exist
-        self.client_id = os.getenv('IGDB_CLIENT_ID', self.client_id)
-        self.client_secret = os.getenv('IGDB_CLIENT_SECRET', self.client_secret)
-        self.auth_token = os.getenv('IGDB_AUTH_TOKEN', self.auth_token)
+        self._client_id = os.getenv('IGDB_CLIENT_ID')
+        if self._client_id is None:
+            raise ValueError("IGDB_CLIENT_ID environment variable is required")
+            
+        self._client_secret = os.getenv('IGDB_CLIENT_SECRET')
+        if self._client_secret is None:
+            raise ValueError("IGDB_CLIENT_SECRET environment variable is required")
+            
+        self._auth_token = os.getenv('IGDB_AUTH_TOKEN')
+        if self._auth_token is None:
+            raise ValueError("IGDB_AUTH_TOKEN environment variable is required")
+
+    @property
+    def client_id(self) -> str:
+        return self._client_id # type: ignore - will raise error in __post_init__ if this attribute is None
+    
+    @property
+    def client_secret(self) -> str:
+        return self._client_secret # type: ignore - will raise error in __post_init__ if this attribute is None
+    
+    @property
+    def auth_token(self) -> str:
+        return self._auth_token # type: ignore - will raise error in __post_init__ if this attribute is None
 
 @dataclass
 class WebUIConfig:
@@ -35,19 +63,34 @@ class WebUIConfig:
 
 @dataclass
 class DatabaseConfig:
-    db_file: str = ""
+    _db_file: str
 
     def __init__(self):
-        self.db_file = os.path.normpath("../../database/hostcart.db")
+        self._db_file = DATABASE_FILE
+        database_dir = os.path.dirname(self._db_file)
+        if not os.path.exists(database_dir):
+            os.makedirs(database_dir)
+
+    @property
+    def db_file(self) -> str:
+        return self._db_file
 
 @dataclass
 class ServerConfig:
-    host: str = ""
-    port: int = 0
+    _host: str
+    _port: int
 
     def __init__(self):
-        self.host = "0.0.0.0"
-        self.port = 8000
+        self._host = HOST
+        self._port = PORT
+
+    @property
+    def host(self) -> str:
+        return self._host
+
+    @property
+    def port(self) -> int:
+        return self._port
 
     # debug: bool = False
     # cors_origins: Optional[List[str]] = None
@@ -67,7 +110,7 @@ class ConfigData:
     igdb: IGDBConfig
     server: ServerConfig
     # web_ui: WebUIConfig
-    db_config: DatabaseConfig
+    database: DatabaseConfig
     
     def __init__(self, config_dict: Optional[dict] = None):
         if config_dict:
@@ -79,25 +122,26 @@ class ConfigData:
             self.igdb = IGDBConfig(**igdb_data)
             self.server = ServerConfig()
             # self.web_ui = WebUIConfig(**web_ui_data)
-            self.db_config = DatabaseConfig()
+            self.database = DatabaseConfig()
         else:
             self.igdb = IGDBConfig()
             self.server = ServerConfig()
             # self.web_ui = WebUIConfig()
-            self.db_config = DatabaseConfig()
+            self.database = DatabaseConfig()
     
     def to_dict(self) -> dict:
         return {
             "igdb": {
-                "client_id": self.igdb.client_id,
-                "client_secret": self.igdb.client_secret,
-                "auth_token": self.igdb.auth_token,
+                # token information cannot be configured via config.json, they are configured via environment variables
+                # "client_id": self.igdb.client_id,
+                # "client_secret": self.igdb.client_secret,
+                # "auth_token": self.igdb.auth_token,
                 "token_timestamp": self.igdb.token_timestamp,
                 "data_refresh_limit": self.igdb.data_refresh_limit
             },
             "server": {
-                "host": self.server.host,
-                "port": self.server.port
+                # "host": self.server.host,
+                # "port": self.server.port,
                 # "debug": self.server.debug,
                 # "cors_origins": self.server.cors_origins,
                 # "cors_allow_credentials": self.server.cors_allow_credentials,
@@ -114,13 +158,20 @@ class ConfigData:
                 # Add web_ui fields here when you define them
             },
             "database": {
-                "db_file": self.db_config.db_file
+                # "db_file": self.database.db_file
             }
         }
 
 class ConfigManager:
     _instance: Optional['ConfigManager'] = None
     _config: Optional[ConfigData] = None
+    # Define which fields can be updated for each section
+    _UPDATABLE_FIELDS = {
+        "igdb": {"token_timestamp", "data_refresh_limit"},
+        "server": {},
+        "database": {}
+    }
+    _VALID_SECTIONS = {"igdb", "server", "database"}  # Add "web_ui" when implemented
     
     def __new__(cls):
         if cls._instance is None:
@@ -146,17 +197,12 @@ class ConfigManager:
         if self._config is None:
             raise RuntimeError("Configuration not loaded. Call _load_config() first.")
 
-        if section:
-            if section == "igdb":
-                return self._config.igdb
-            elif section == "server":
-                return self._config.server
-            # elif section == "web_ui":
-            #     return self._config.web_ui
-            elif section == "database":
-                return self._config.db_config
-            else:
-                raise ValueError(f"Unknown configuration section: {section}")
+        if section:            
+            if section not in self._VALID_SECTIONS:
+                raise ValueError(f"Unknown configuration section: {section}.")
+            
+            return getattr(self._config, section)
+        
         return self._config
     
     def save_config(self) -> None:
@@ -183,26 +229,20 @@ class ConfigManager:
         if self._config is None:
             raise RuntimeError("Configuration not loaded")
         
-        if section == "igdb":
-            for key, value in kwargs.items():
-                if hasattr(self._config.igdb, key):
-                    setattr(self._config.igdb, key, value)
-                else:
-                    raise ValueError(f"Unknown IGDB config field: {key}")
-        elif section == "server":
-            for key, value in kwargs.items():
-                if hasattr(self._config.server, key):
-                    setattr(self._config.server, key, value)
-                else:
-                    raise ValueError(f"Unknown server config field: {key}")
-        elif section == "database":
-            for key, value in kwargs.items():
-                if hasattr(self._config.db_config, key):
-                    setattr(self._config.db_config, key, value)
-                else:
-                    raise ValueError(f"Unknown database config field: {key}")
-        else:
+        # Check if section exists
+        if section not in self._UPDATABLE_FIELDS:
             raise ValueError(f"Unknown configuration section: {section}")
+        
+        config_obj = getattr(self._config, section)
+        allowed_fields = self._UPDATABLE_FIELDS[section]
+        
+        for key, value in kwargs.items():
+            if key not in allowed_fields:
+                raise ValueError(f"Field '{key}' is not updatable in section '{section}'. "
+                               f"Allowed fields: {', '.join(allowed_fields)}")
+            
+            # Only set attributes that are explicitly allowed
+            setattr(config_obj, key, value)
         
         # Save the updated configuration
         self.save_config()

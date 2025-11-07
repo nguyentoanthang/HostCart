@@ -1,0 +1,159 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "HostCart"
+version = "0.0.1"
+description = "The self-hosted game collection server."
+readme = "README.md"
+license = {text = "GPL-3.0"}
+requires-python = ">=3.12"
+authors = [
+    {name = "Thang Nguyen", email = "nguyentoanthang18@gmail.com"}
+]
+maintainers = [
+    # Add maintainers here
+]
+dependencies = [
+    # Add your runtime dependencies here
+]
+
+[project.optional-dependencies]
+dev = [
+    # Development dependencies
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "coverage>=7.11.0",
+    "pytest-html>=4.1.1"
+]
+test = [
+    # Testing dependencies
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "coverage>=7.11.0",
+    "pytest-html>=4.1.1"
+]
+
+[project.urls]
+Homepage = ""
+Documentation = ""
+Repository = "https://github.com/nguyentoanthang/HostCart"
+"Bug Tracker" = ""
+Changelog = ""
+
+[project.scripts]
+# Define command-line scripts here
+# my-command = "my_package.module:main_function"
+
+[project.gui-scripts]
+# Define GUI scripts here if needed
+# my-gui-app = "my_package.gui:main_function"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = [
+    "."
+]
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "--cov=config",
+    "--cov=src", 
+    "--cov-report=term-missing",
+    "--cov-fail-under=100",
+    # Remove file outputs from default - let run_test.py handle them
+    # "--cov-report=html:htmlcov",
+    # "--cov-report=xml:coverage.xml",
+    # "--cov-report=json:coverage.json",
+    # "--junit-xml=reports/junit.xml"
+]
+
+[tool.coverage.run]
+# Source directories to measure coverage for
+source = ["src"]
+# Alternative: use relative_files = true for better path handling
+relative_files = true
+
+# Files/directories to exclude from coverage measurement
+omit = [
+    "*/tests/*",
+    "*/all_tests/*",
+    "*/venv/*",
+    "*/virtualenv/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "*/settings/*",
+    "setup.py",
+    "manage.py",
+    "*/run_test.py",
+    "*/.pytest_cache/*",
+    "*/node_modules/*"
+]
+
+[tool.coverage.report]
+# Lines to exclude from coverage reporting
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__", 
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "raise ValueError.*not implemented",
+    "if __name__ == .__main__.:",
+    "class .*\\(Protocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "@abstractmethod",
+    # Exclude type checking imports
+    "if TYPE_CHECKING:",
+    # Exclude debug code
+    "if DEBUG:",
+    "if settings.DEBUG"
+]
+
+# Show missing line numbers in terminal report
+show_missing = true
+
+# Precision for coverage percentage
+precision = 1
+
+# Skip covered files in report (only show files with missing coverage)
+skip_covered = false
+
+# Skip empty files
+skip_empty = true
+
+[tool.coverage.html]
+# HTML report will be overridden by run_test.py, but this is the default
+directory = "htmlcov"
+title = "HostCart Configuration Coverage Report"
+
+# Show contexts (which tests covered which lines)
+show_contexts = true
+
+# Extra CSS for better styling
+extra_css = ""
+
+[tool.coverage.xml]
+# XML report will be overridden by run_test.py, but this is the default  
+output = "coverage.xml"
+
+[tool.coverage.json]
+# JSON report will be overridden by run_test.py, but this is the default
+output = "coverage.json"
+
+# Pretty print JSON output
+pretty_print = true
+
+[tool.coverage.paths]
+# Map different path representations to the same files
+# Useful for CI/CD environments with different path structures
+source = [
+    "src/",
+    "./src/"
+]

@@ -25,9 +25,6 @@ class IGDBConfig:
         self.token_timestamp = token_timestamp
         self.data_refresh_limit = data_refresh_limit
         
-        self.__post_init__()
-
-    def __post_init__(self):
         # Override with environment variables if they exist
         self._client_id = os.getenv('IGDB_CLIENT_ID')
         if self._client_id is None:

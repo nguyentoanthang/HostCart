@@ -1,0 +1,19 @@
+services:
+  hostcart:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hostcart:latest
+    container_name: hostcart
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000

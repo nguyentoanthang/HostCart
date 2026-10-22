@@ -1,10 +1,12 @@
-requests
-tabulate
 fastapi
-pydantic
 uvicorn[standard]
-# enable for native mode
-#pywebview>=5.1
-#PyQt5>=5.15.11
-#PyQtWebEngine>=5.15.7
-#QtPy>=2.4.1
+sqlmodel
+pydantic
+pydantic-settings
+pyjwt
+bcrypt
+python-multipart
+httpx
+requests
+pytest
+pytest-cov

@@ -1,5 +1,40 @@
-venv
-.vscode
-__pycache__
-tests/reports
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE and Editor
+.vscode/
+.idea/
+
+# Python cache & artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Testing and coverage
+.pytest_cache/
+.pytest_tmp/
 .coverage
+htmlcov/
+tests/reports/
+
+# Database and runtime data
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+
+# Environment variables
+.env
+.env.local
+
+# Frontend
+node_modules/
+frontend/dist/
+
+# OS files
+.DS_Store
+Thumbs.db

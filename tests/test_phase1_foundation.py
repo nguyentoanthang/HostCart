@@ -41,10 +41,13 @@ from src.data.models import (
 # =====================================================================
 
 @pytest.fixture(autouse=True)
-def clean_config_and_db_state():
-    """Reset singletons and relevant environment variables between tests."""
+def clean_config_and_db_state(monkeypatch, tmp_path):
+    """Reset singletons and isolate from developer's local .env between tests."""
     reset_config_store()
     reset_engine()
+
+    # Isolate from local .env if present
+    monkeypatch.setattr("src.core.config.DEFAULT_ENV_PATH", tmp_path / ".empty_test_env")
 
     keys_to_clean = [
         "SECRET_KEY",

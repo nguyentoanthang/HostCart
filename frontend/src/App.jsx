@@ -296,24 +296,45 @@ export default function App() {
   // Check auth and load user + collection
   const loadUserDataAndCollection = useCallback(async () => {
     setLoading(true);
-    const token = getToken();
-    if (token) {
-      try {
-        const user = await auth.getMe();
-        setCurrentUser(user);
-        const col = await collection.list();
-        setItems(col);
-      } catch (err) {
-        console.warn("Auth check failed:", err);
-        auth.logout();
+    try {
+      // Before checking local token or if !getToken(), attempt SSO session handshake
+      if (!getToken()) {
+        await auth.checkSsoSession();
+      }
+
+      let token = getToken();
+      if (token) {
+        try {
+          const user = await auth.getMe();
+          setCurrentUser(user);
+          const col = await collection.list();
+          setItems(col);
+        } catch (err) {
+          console.warn("Auth check failed:", err);
+          auth.logout();
+          // Attempt SSO session handshake once more in case local token expired but SSO cookie is valid
+          const ssoData = await auth.checkSsoSession();
+          if (ssoData) {
+            const user = await auth.getMe();
+            setCurrentUser(user);
+            const col = await collection.list();
+            setItems(col);
+          } else {
+            setCurrentUser(null);
+            setItems([]);
+          }
+        }
+      } else {
         setCurrentUser(null);
         setItems([]);
       }
-    } else {
+    } catch (err) {
+      console.warn("Error loading user data and collection:", err);
       setCurrentUser(null);
       setItems([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {

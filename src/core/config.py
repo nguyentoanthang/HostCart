@@ -35,6 +35,10 @@ class DatabaseConfig(BaseModel):
         if self.db_file == ":memory:":
             return Path(":memory:")
 
+        for prefix in ("postgresql+psycopg://", "postgresql://", "postgres://"):
+            if self.db_file.startswith(prefix):
+                return Path(self.db_file)
+
         path_str = self.db_file
         if path_str.startswith("sqlite:///"):
             path_str = path_str.replace("sqlite:///", "")
@@ -97,6 +101,16 @@ class WebUIConfig(BaseModel):
     theme: str = "arcadia"
 
 
+class HomelabConfig(BaseModel):
+    deployment_mode: str = "standalone"
+    auth_mode: str = "standalone"
+    homelab_sso_secret: str = ""
+    homelab_internal_token: str = ""
+    ai_base_url: str = "https://openrouter.ai/api/v1"
+    ai_api_key: str = ""
+    ai_model: str = "openai/gpt-4o-mini"
+
+
 class Settings(BaseModel):
     server: ServerConfig = Field(default_factory=ServerConfig)
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
@@ -104,6 +118,7 @@ class Settings(BaseModel):
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     features: FeaturesConfig = Field(default_factory=FeaturesConfig)
     web_ui: WebUIConfig = Field(default_factory=WebUIConfig)
+    homelab: HomelabConfig = Field(default_factory=HomelabConfig)
 
 
 def _deep_merge_dicts(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
@@ -218,6 +233,46 @@ class ConfigStore:
             env_overrides.setdefault("providers", {}).setdefault("books", {})[
                 "google_books_api_key"
             ] = merged_env["GOOGLE_BOOKS_API_KEY"]
+
+        # Homelab and AI settings overrides
+        if "DEPLOYMENT_MODE" in merged_env and merged_env["DEPLOYMENT_MODE"]:
+            env_overrides.setdefault("homelab", {})["deployment_mode"] = merged_env[
+                "DEPLOYMENT_MODE"
+            ]
+
+        if "AUTH_MODE" in merged_env and merged_env["AUTH_MODE"]:
+            env_overrides.setdefault("homelab", {})["auth_mode"] = merged_env[
+                "AUTH_MODE"
+            ]
+
+        if "HOMELAB_SSO_SECRET" in merged_env and merged_env["HOMELAB_SSO_SECRET"]:
+            env_overrides.setdefault("homelab", {})["homelab_sso_secret"] = merged_env[
+                "HOMELAB_SSO_SECRET"
+            ]
+
+        if "HOMELAB_INTERNAL_TOKEN" in merged_env and merged_env["HOMELAB_INTERNAL_TOKEN"]:
+            env_overrides.setdefault("homelab", {})["homelab_internal_token"] = merged_env[
+                "HOMELAB_INTERNAL_TOKEN"
+            ]
+
+        if "AI_BASE_URL" in merged_env and merged_env["AI_BASE_URL"]:
+            env_overrides.setdefault("homelab", {})["ai_base_url"] = merged_env[
+                "AI_BASE_URL"
+            ]
+
+        if "AI_API_KEY" in merged_env and merged_env["AI_API_KEY"]:
+            env_overrides.setdefault("homelab", {})["ai_api_key"] = merged_env[
+                "AI_API_KEY"
+            ]
+        elif "OPENROUTER_API_KEY" in merged_env and merged_env["OPENROUTER_API_KEY"]:
+            env_overrides.setdefault("homelab", {})["ai_api_key"] = merged_env[
+                "OPENROUTER_API_KEY"
+            ]
+
+        if "AI_MODEL" in merged_env and merged_env["AI_MODEL"]:
+            env_overrides.setdefault("homelab", {})["ai_model"] = merged_env[
+                "AI_MODEL"
+            ]
 
         final_data = _deep_merge_dicts(config_data, env_overrides)
         self._settings = Settings.model_validate(final_data)

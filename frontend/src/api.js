@@ -35,6 +35,7 @@ export async function apiRequest(endpoint, options = {}) {
   }
 
   const response = await fetch(endpoint, {
+    credentials: "include",
     ...options,
     headers,
   });
@@ -92,6 +93,31 @@ export const auth = {
     return await apiRequest("/api/v1/auth/me", {
       method: "GET",
     });
+  },
+
+  async checkSsoSession() {
+    try {
+      const token = getToken();
+      const headers = { Accept: "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const response = await fetch("/api/v1/auth/sso-session", {
+        method: "GET",
+        credentials: "include",
+        headers,
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.access_token) {
+          setToken(data.access_token);
+        }
+        return data;
+      }
+      return null;
+    } catch {
+      return null;
+    }
   },
 
   logout() {
@@ -180,6 +206,7 @@ export const importExport = {
       headers["Authorization"] = `Bearer ${token}`;
     }
     const res = await fetch(`/api/v1/import-export/export?${query.toString()}`, {
+      credentials: "include",
       headers,
     });
     if (!res.ok) {

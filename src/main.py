@@ -14,8 +14,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from src.api.v1.ai_assistant import router as ai_router
 from src.api.v1.auth import router as auth_router
 from src.api.v1.collection import router as collection_router
+from src.api.v1.homelab import router as homelab_router
 from src.api.v1.import_export import router as import_export_router
 from src.api.v1.search import router as search_router
 from src.api.v1.settings import router as settings_router
@@ -62,6 +64,8 @@ def create_app() -> FastAPI:
     app.include_router(search_router, prefix=api_prefix)
     app.include_router(import_export_router, prefix=api_prefix)
     app.include_router(settings_router, prefix=api_prefix)
+    app.include_router(homelab_router, prefix=api_prefix)
+    app.include_router(ai_router, prefix=api_prefix)
 
     # Mount frontend SPA if built
     project_root = Path(__file__).resolve().parents[1]

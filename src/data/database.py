@@ -25,6 +25,7 @@ def get_engine(
     """
     Get or create a SQLAlchemy/SQLModel Engine.
     If db_path is None, the path from configuration is used and the engine is cached.
+    Supports SQLite and PostgreSQL engines.
     """
     global _engine
 
@@ -33,12 +34,42 @@ def get_engine(
 
     settings = get_settings()
 
-    if db_path is not None:
+    if isinstance(db_path, Path):
+        raw_str = str(db_path)
+        for prefix in ("postgresql+psycopg:", "postgresql:", "postgres:"):
+            if raw_str.startswith(prefix + "\\") or raw_str.startswith(prefix + "/"):
+                raw_path = prefix + "//" + raw_str[len(prefix):].lstrip("\\/").replace("\\", "/")
+                break
+        else:
+            raw_path = raw_str
+    elif db_path is not None:
         raw_path = str(db_path)
     else:
-        raw_path = str(settings.database.get_resolved_path())
+        db_file = settings.database.db_file
+        if any(db_file.startswith(p) for p in ("postgresql://", "postgresql+psycopg://", "postgres://")):
+            raw_path = db_file
+        else:
+            raw_path = str(settings.database.get_resolved_path())
 
-    if raw_path == ":memory:":
+    is_postgres = any(
+        raw_path.startswith(p)
+        for p in ("postgresql://", "postgresql+psycopg://", "postgres://")
+    )
+
+    if is_postgres:
+        if raw_path.startswith("postgres://"):
+            db_url = "postgresql+psycopg://" + raw_path[len("postgres://"):]
+        elif raw_path.startswith("postgresql://"):
+            db_url = "postgresql+psycopg://" + raw_path[len("postgresql://"):]
+        else:
+            db_url = raw_path
+
+        created_engine = create_engine(
+            db_url,
+            echo=echo,
+            pool_pre_ping=True,
+        )
+    elif raw_path == ":memory:":
         db_url = "sqlite:///:memory:"
         created_engine = create_engine(
             db_url,
@@ -61,6 +92,20 @@ def get_engine(
         _engine = created_engine
 
     return created_engine
+
+
+def get_database_backend(engine: Optional[Engine] = None) -> str:
+    """
+    Return 'postgresql' if the dialect or URL scheme is PostgreSQL, else 'sqlite'.
+    """
+    target_engine = engine or get_engine()
+    dialect_name = getattr(target_engine.dialect, "name", "").lower()
+    if "postgres" in dialect_name:
+        return "postgresql"
+    url_scheme = str(getattr(target_engine, "url", "")).split("://")[0].lower()
+    if "postgres" in url_scheme:
+        return "postgresql"
+    return "sqlite"
 
 
 def reset_engine() -> None:

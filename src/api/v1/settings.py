@@ -40,6 +40,15 @@ def mask_sensitive_settings(data: Dict[str, Any]) -> Dict[str, Any]:
             if prov["books"].get("google_books_api_key"):
                 prov["books"]["google_books_api_key"] = "********"
 
+    # Homelab settings
+    if "homelab" in masked and isinstance(masked["homelab"], dict):
+        if masked["homelab"].get("homelab_sso_secret"):
+            masked["homelab"]["homelab_sso_secret"] = "********"
+        if masked["homelab"].get("homelab_internal_token"):
+            masked["homelab"]["homelab_internal_token"] = "********"
+        if masked["homelab"].get("ai_api_key"):
+            masked["homelab"]["ai_api_key"] = "********"
+
     return masked
 
 

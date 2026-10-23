@@ -29,7 +29,10 @@ import {
   ChevronRight,
   Shield,
   Layers,
-  Flame
+  Flame,
+  Menu,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { auth, collection, search, importExport, settings, getToken } from "./api";
 import StatisticsView from "./components/StatisticsView";
@@ -245,6 +248,38 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
+
+  // Responsive & Fullscreen State
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Sync fullscreen state with browser events
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+    };
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      const docEl = document.documentElement;
+      const requestFs = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+      if (requestFs) {
+        requestFs.call(docEl).catch(err => console.warn("Fullscreen request error:", err));
+      }
+    } else {
+      const exitFs = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+      if (exitFs) {
+        exitFs.call(document).catch(err => console.warn("Exit fullscreen error:", err));
+      }
+    }
+  };
 
   // Modals & Forms
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -741,11 +776,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen ambient-bg flex items-center justify-center p-2 md:p-5 selection:bg-red-500/30 selection:text-white">
+    <div className="h-full w-full min-h-screen md:h-screen ambient-bg flex flex-col overflow-hidden selection:bg-red-500/30 selection:text-white">
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border text-sm font-semibold transition-all duration-300 ${
+          className={`fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 flex items-center gap-3 px-4 sm:px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-xl border text-xs sm:text-sm font-semibold transition-all duration-300 ${
             toast.type === "error"
               ? "bg-red-950/90 border-red-500 text-red-200"
               : toast.type === "info"
@@ -753,16 +788,255 @@ export default function App() {
               : "bg-zinc-900/90 border-emerald-500 text-emerald-200"
           }`}
         >
-          {toast.type === "error" ? <X className="w-5 h-5 text-red-400" /> : <Sparkles className="w-5 h-5 text-emerald-400" />}
+          {toast.type === "error" ? <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" /> : <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />}
           <span>{toast.message}</span>
         </div>
       )}
 
-      {/* Main Container */}
-      <div className="w-full max-w-[1540px] bg-[#181313]/95 border border-white/10 rounded-[28px] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[900px] backdrop-blur-xl">
+      {/* MOBILE TOP BAR (Phone / Small screen view) */}
+      <header className="md:hidden flex items-center justify-between px-3.5 py-2.5 bg-[#141010]/95 border-b border-white/[0.08] backdrop-blur-md z-30 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open navigation menu"
+            className="p-2 rounded-xl bg-white/[0.05] hover:bg-white/10 text-zinc-300 hover:text-white transition"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveNav("all")}>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-md shadow-red-500/30">
+              <span className="text-white font-extrabold text-base tracking-tighter">H</span>
+            </div>
+            <div>
+              <span className="text-sm font-extrabold tracking-wider text-white uppercase block leading-none">
+                HostCart
+              </span>
+              <span className="text-[9px] tracking-widest text-red-400 font-bold uppercase">
+                {TYPE_CONFIG[activeNav]?.label || activeNav}
+              </span>
+            </div>
+          </div>
+        </div>
 
-        {/* LEFT NAVIGATION SIDEBAR */}
-        <aside className="w-full md:w-64 bg-[#141010] border-r border-white/[0.06] flex flex-col justify-between p-6 select-none shrink-0">
+        <div className="flex items-center gap-2">
+          {/* Mobile Fullscreen Toggle Button */}
+          <button
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            className="p-2 rounded-xl bg-white/[0.05] hover:bg-white/10 text-zinc-300 hover:text-white transition"
+            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          >
+            {isFullscreen ? <Minimize2 className="w-4 h-4 text-red-400" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
+          {/* Quick Add Button */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 text-white p-2 rounded-xl shadow-md shadow-red-500/30 transition flex items-center justify-center"
+            title="Add Media"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+
+          {/* User Profile / Login Avatar */}
+          {currentUser ? (
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="w-8 h-8 rounded-xl bg-gradient-to-tr from-red-500 to-rose-400 p-0.5 shrink-0"
+              title={currentUser.username}
+            >
+              <div className="w-full h-full rounded-[10px] bg-[#1a1414] flex items-center justify-center text-xs font-bold text-white">
+                {currentUser.username.slice(0, 2).toUpperCase()}
+              </div>
+            </button>
+          ) : (
+            <button
+              onClick={() => { setAuthMode("login"); setShowAuthModal(true); }}
+              className="px-2.5 py-1 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold"
+            >
+              Sign In
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* MOBILE SLIDE-OUT DRAWER OVERLAY */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer content */}
+          <div className="relative w-[285px] max-w-[85vw] bg-[#141010] border-r border-white/10 p-5 flex flex-col justify-between shadow-2xl z-50 h-full overflow-y-auto custom-scroll">
+            <div className="space-y-6">
+              {/* Drawer Top / Logo */}
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30">
+                    <span className="text-white font-extrabold text-lg tracking-tighter">H</span>
+                  </div>
+                  <div>
+                    <span className="text-base font-extrabold tracking-wider text-white uppercase block leading-none">
+                      HostCart
+                    </span>
+                    <span className="text-[9px] tracking-widest text-red-400 font-bold uppercase">
+                      Media Engine
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-white/[0.05]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="space-y-1">
+                {[
+                  { id: "all", label: "Dashboard", icon: LayoutDashboard },
+                  { id: "stats", label: "Statistics", icon: BarChart3 },
+                  { id: "game", label: "Video Games", icon: Gamepad2 },
+                  { id: "movie", label: "Movies", icon: Film },
+                  { id: "tv_show", label: "TV Shows", icon: Tv },
+                  { id: "book", label: "Books", icon: BookOpen },
+                  { id: "import", label: "Import / Export", icon: DownloadCloud },
+                  { id: "settings", label: "API Settings", icon: SettingsIcon },
+                ].map(nav => {
+                  const active = activeNav === nav.id;
+                  const IconComponent = nav.icon;
+                  return (
+                    <button
+                      key={nav.id}
+                      onClick={() => {
+                        setActiveNav(nav.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        active
+                          ? "sidebar-active text-white shadow-sm font-bold"
+                          : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      <IconComponent className={`w-4 h-4 ${active ? "text-red-400" : "text-zinc-400"}`} />
+                      <span>{nav.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {/* Active Media Pulse in Mobile Drawer */}
+              <div className="pt-4 border-t border-white/[0.06]">
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 px-2 mb-3 flex items-center justify-between">
+                  <span>Active Pulse</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                </p>
+                <div className="space-y-2.5 px-1 text-xs">
+                  <div className="flex items-center justify-between text-zinc-300">
+                    <span className="flex items-center gap-2">
+                      <span className="text-red-400">🎮</span> Games
+                    </span>
+                    <span className="font-bold text-white">
+                      {items.filter(i => i.media?.media_type === "game").length} items
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-zinc-300">
+                    <span className="flex items-center gap-2">
+                      <span className="text-amber-400">🎬</span> Movies
+                    </span>
+                    <span className="font-bold text-white">
+                      {items.filter(i => i.media?.media_type === "movie").length} items
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-zinc-300">
+                    <span className="flex items-center gap-2">
+                      <span className="text-cyan-400">📺</span> Series
+                    </span>
+                    <span className="font-bold text-white">
+                      {items.filter(i => i.media?.media_type === "tv_show").length} items
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-zinc-300">
+                    <span className="flex items-center gap-2">
+                      <span className="text-emerald-400">📚</span> Books
+                    </span>
+                    <span className="font-bold text-white">
+                      {items.filter(i => i.media?.media_type === "book").length} items
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* User Profile in Drawer */}
+            <div className="pt-4 border-t border-white/[0.06] mt-4">
+              {currentUser ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-red-500 to-rose-400 p-0.5 shrink-0">
+                    <div className="w-full h-full rounded-2xl bg-[#1a1414] flex items-center justify-center text-xs font-bold text-white">
+                      {currentUser.username.slice(0, 2).toUpperCase()}
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-white truncate">
+                        {currentUser.username}
+                      </p>
+                      <button
+                        onClick={handleLogout}
+                        title="Log Out"
+                        className="text-zinc-500 hover:text-red-400 transition p-1"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex gap-1 my-1">
+                      {[0, 1, 2, 3].map(seg => (
+                        <span
+                          key={seg}
+                          className={`h-1 flex-1 rounded-full ${
+                            seg < curatorXPAndLevel.filledSegments ? "bg-red-500" : "bg-white/20"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-zinc-400 font-medium truncate">
+                      Lv. {curatorXPAndLevel.level} ({curatorXPAndLevel.xp} XP) • {currentUser.is_admin ? "Admin" : "Curator"}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      setAuthMode("login");
+                      setShowAuthModal(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-lg shadow-red-500/25 flex items-center justify-center gap-2"
+                  >
+                    <UserIcon className="w-4 h-4" />
+                    <span>Sign In / Register</span>
+                  </button>
+                  <p className="text-[10px] text-zinc-500 text-center">
+                    Sign in to track your library
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN FULL-SCREEN WORKSPACE (PC Edge-to-Edge) */}
+      <div className="flex-1 flex overflow-hidden w-full relative">
+
+        {/* LEFT NAVIGATION SIDEBAR (Desktop PC View) */}
+        <aside className="hidden md:flex md:w-64 lg:w-72 bg-[#141010] border-r border-white/[0.06] flex-col justify-between p-5 lg:p-6 select-none shrink-0 h-full overflow-y-auto custom-scroll">
           <div>
             {/* Logo */}
             <div className="flex items-center gap-3 px-2 mb-8">
@@ -885,7 +1159,7 @@ export default function App() {
                       />
                     ))}
                   </div>
-                  <p className="text-[11px] text-zinc-400 font-medium">
+                  <p className="text-[11px] text-zinc-400 font-medium truncate">
                     Curator Lv. {curatorXPAndLevel.level} ({curatorXPAndLevel.xp} XP) • {currentUser.is_admin ? "Admin" : "Curator"}
                   </p>
                 </div>
@@ -908,48 +1182,67 @@ export default function App() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 p-5 md:p-8 overflow-y-auto custom-scroll space-y-7">
+        <main className="flex-1 h-full overflow-y-auto custom-scroll p-3.5 sm:p-6 lg:p-8 space-y-6 pb-24 md:pb-8">
 
           {/* TOP HEADER BAR */}
-          <header className="flex flex-wrap items-center justify-between gap-4">
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             {/* Search Bar */}
-            <div className="relative w-full max-w-md">
+            <div className="relative w-full sm:max-w-md">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Filter by title, creator, genre..."
-                className="w-full bg-[#221b1b] border border-white/[0.08] focus:border-red-500/60 rounded-full pl-11 pr-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none transition shadow-inner"
+                className="w-full bg-[#221b1b] border border-white/[0.08] focus:border-red-500/60 rounded-full pl-11 pr-4 py-2.5 text-xs sm:text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none transition shadow-inner"
               />
             </div>
 
             {/* Quick Stats Pills & Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 bg-[#231c1c] border border-white/[0.08] px-4 py-2 rounded-full">
-                <Clock className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-bold text-white">{totalGamingHours}h Gaming</span>
+            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-0.5">
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-[#231c1c] border border-white/[0.08] px-3 sm:px-4 py-2 rounded-full whitespace-nowrap shrink-0">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                <span className="text-xs sm:text-sm font-bold text-white">{totalGamingHours}h Gaming</span>
               </div>
-              <div className="flex items-center gap-2 bg-[#231c1c] border border-white/[0.08] px-4 py-2 rounded-full">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-bold text-white">{completedCount} Completed</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-[#231c1c] border border-white/[0.08] px-3 sm:px-4 py-2 rounded-full whitespace-nowrap shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                <span className="text-xs sm:text-sm font-bold text-white">{completedCount} Completed</span>
               </div>
+
+              {/* Fullscreen PC Mode Button */}
+              <button
+                onClick={toggleFullscreen}
+                title={isFullscreen ? "Exit Fullscreen" : "Full Screen PC Mode"}
+                className="hidden md:flex items-center gap-2 bg-[#231c1c] hover:bg-white/10 border border-white/[0.08] px-3.5 py-2 rounded-full text-xs font-semibold text-zinc-300 hover:text-white transition shrink-0"
+              >
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 className="w-4 h-4 text-red-400" />
+                    <span>Exit Fullscreen</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="w-4 h-4 text-zinc-400" />
+                    <span>Full Screen</span>
+                  </>
+                )}
+              </button>
 
               {/* Demo Seed Button */}
               {items.length === 0 && (
                 <button
                   onClick={handleSeedDemo}
-                  className="bg-zinc-800 hover:bg-zinc-700 border border-white/20 text-white text-xs font-bold px-4 py-2.5 rounded-full transition flex items-center gap-2"
+                  className="bg-zinc-800 hover:bg-zinc-700 border border-white/20 text-white text-xs font-bold px-4 py-2 rounded-full transition flex items-center gap-2 whitespace-nowrap shrink-0"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Seed Demo Collection</span>
+                  <span>Seed Demo</span>
                 </button>
               )}
 
               {/* Add Media Button */}
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-lg shadow-red-500/30 transition flex items-center gap-2"
+                className="bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white text-xs sm:text-sm font-semibold px-4 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-lg shadow-red-500/30 transition flex items-center gap-2 whitespace-nowrap shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Media</span>
@@ -1161,9 +1454,9 @@ export default function App() {
             <>
               {/* TOP HERO ROW (Carousels) */}
               {currentHero && (
-                <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
                   {/* Hero Left 8 Cols */}
-                  <div className="lg:col-span-8 relative h-[350px] rounded-[26px] overflow-hidden border border-white/10 group shadow-2xl">
+                  <div className="lg:col-span-8 relative h-[260px] sm:h-[320px] md:h-[350px] rounded-2xl md:rounded-[26px] overflow-hidden border border-white/10 group shadow-2xl">
                     <img
                       src={currentHero.media?.backdrop_url || currentHero.media?.poster_url}
                       alt={currentHero.media?.title}
@@ -1173,35 +1466,35 @@ export default function App() {
                     <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-transparent to-transparent" />
 
                     {/* Badge */}
-                    <div className="absolute top-5 left-5 flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/20 px-3.5 py-1.5 rounded-full text-xs font-semibold text-white">
+                    <div className="absolute top-3 left-3 sm:top-5 sm:left-5 flex items-center gap-1.5 sm:gap-2 bg-white/15 backdrop-blur-md border border-white/20 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold text-white">
                       <span>{TYPE_CONFIG[currentHero.media?.media_type]?.icon}</span>
                       <span>{getMetricString(currentHero)}</span>
                     </div>
 
                     {/* Hero Info */}
-                    <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-                      <div className="space-y-1.5 max-w-md">
-                        <span className="text-[11px] uppercase tracking-widest text-red-400 font-bold">
+                    <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4">
+                      <div className="space-y-1 sm:space-y-1.5 max-w-md">
+                        <span className="text-[10px] sm:text-[11px] uppercase tracking-widest text-red-400 font-bold">
                           Featured {TYPE_CONFIG[currentHero.media?.media_type]?.label}
                         </span>
-                        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white uppercase leading-none truncate">
+                        <h1 className="text-xl sm:text-2xl md:text-4xl font-extrabold tracking-tight text-white uppercase leading-tight truncate">
                           {currentHero.media?.title}
                         </h1>
-                        <p className="text-xs font-semibold tracking-wider text-zinc-300 uppercase truncate">
+                        <p className="text-[11px] sm:text-xs font-semibold tracking-wider text-zinc-300 uppercase truncate">
                           — {currentHero.media?.creators?.join(", ") || `${currentHero.media?.release_year || ""}`}
                         </p>
 
-                        <div className="pt-3 flex items-center gap-3">
+                        <div className="pt-2 sm:pt-3 flex flex-wrap items-center gap-2 sm:gap-3">
                           <button
                             onClick={(e) => handleQuickIncrement(currentHero.id, e)}
-                            className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs px-5 py-3 rounded-full shadow-lg transition flex items-center gap-2"
+                            className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold text-xs px-3.5 sm:px-5 py-2 sm:py-3 rounded-full shadow-lg transition flex items-center gap-1.5 sm:gap-2"
                           >
                             <span>Log Progress</span>
                             <span>▶</span>
                           </button>
                           <button
                             onClick={() => handleOpenEdit(currentHero)}
-                            className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/15 text-white font-semibold text-xs px-5 py-3 rounded-full transition"
+                            className="bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/15 text-white font-semibold text-xs px-3.5 sm:px-5 py-2 sm:py-3 rounded-full transition"
                           >
                             Edit / Details
                           </button>
@@ -1216,7 +1509,7 @@ export default function App() {
                             onClick={() => setHeroIndex(i)}
                             className={`h-1.5 rounded-full transition-all ${
                               i === heroIndex % Math.min(5, heroItems.length)
-                                ? "w-7 bg-white"
+                                ? "w-6 sm:w-7 bg-white"
                                 : "w-1.5 bg-white/40 hover:bg-white/70"
                             }`}
                           />
@@ -1226,25 +1519,25 @@ export default function App() {
                   </div>
 
                   {/* Hero Right 4 Cols: Active Wave Card & Currently Tracking */}
-                  <div className="lg:col-span-4 flex flex-col gap-5">
+                  <div className="lg:col-span-4 flex flex-col gap-4 sm:gap-5">
                     {/* Wave Card */}
                     {activeWaveItem && (
-                      <div className="wave-card rounded-[22px] border border-white/10 p-4 flex items-center justify-between h-[96px] shadow-lg">
+                      <div className="wave-card rounded-xl sm:rounded-[22px] border border-white/10 p-3 sm:p-4 flex items-center justify-between min-h-[88px] sm:h-[96px] shadow-lg">
                         <div
                           className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-500 to-rose-500 transition-all duration-500 opacity-90"
                           style={{ width: `${Math.max(25, getProgressPct(activeWaveItem))}%` }}
                         />
-                        <div className="relative z-10 flex items-center gap-3.5 min-w-0">
+                        <div className="relative z-10 flex items-center gap-3 min-w-0">
                           <img
                             src={activeWaveItem.media?.poster_url}
                             alt={activeWaveItem.media?.title}
-                            className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/20 shadow shrink-0"
+                            className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl object-cover ring-2 ring-white/20 shadow shrink-0"
                           />
                           <div className="min-w-0">
-                            <p className="text-sm font-extrabold text-white drop-shadow-sm truncate max-w-[170px]">
+                            <p className="text-xs sm:text-sm font-extrabold text-white drop-shadow-sm truncate max-w-[140px] sm:max-w-[170px]">
                               {activeWaveItem.media?.title}
                             </p>
-                            <p className="text-xs font-semibold text-white/90 truncate max-w-[170px]">
+                            <p className="text-[11px] sm:text-xs font-semibold text-white/90 truncate max-w-[140px] sm:max-w-[170px]">
                               {getProgressPct(activeWaveItem)}% • {getMetricString(activeWaveItem)}
                             </p>
                           </div>
@@ -1252,7 +1545,7 @@ export default function App() {
                         <button
                           onClick={(e) => handleQuickIncrement(activeWaveItem.id, e)}
                           title="Quick Increment (+)"
-                          className="relative z-10 w-9 h-9 rounded-xl bg-black/40 hover:bg-black/60 border border-white/20 text-white flex items-center justify-center text-sm font-bold transition shrink-0"
+                          className="relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black/40 hover:bg-black/60 border border-white/20 text-white flex items-center justify-center text-sm font-bold transition shrink-0"
                         >
                           ＋
                         </button>
@@ -1260,9 +1553,9 @@ export default function App() {
                     )}
 
                     {/* Currently Tracking Queue */}
-                    <div className="flex-1 bg-[#201919] border border-white/[0.07] rounded-[24px] p-5 flex flex-col justify-between">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <div className="flex-1 bg-[#201919] border border-white/[0.07] rounded-xl sm:rounded-[24px] p-3.5 sm:p-5 flex flex-col justify-between">
+                      <div className="flex items-center justify-between mb-2.5 sm:mb-3">
+                        <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
                           <Flame className="w-4 h-4 text-red-400" />
                           <span>Currently Tracking</span>
                         </h3>
@@ -1270,31 +1563,31 @@ export default function App() {
                           Stats ↗
                         </button>
                       </div>
-                      <div className="space-y-3.5">
+                      <div className="space-y-2.5 sm:space-y-3.5">
                         {items.filter(i => i.status === "in_progress").slice(0, 3).map(item => (
                           <div
                             key={item.id}
                             onClick={() => handleOpenEdit(item)}
                             className="flex items-center justify-between gap-3 group cursor-pointer"
                           >
-                            <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                               <img
                                 src={item.media?.poster_url}
                                 alt={item.media?.title}
-                                className="w-10 h-10 rounded-xl object-cover shrink-0 group-hover:ring-2 ring-red-500/60 transition"
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover shrink-0 group-hover:ring-2 ring-red-500/60 transition"
                               />
                               <div className="min-w-0">
                                 <p className="text-xs font-bold text-zinc-100 truncate group-hover:text-red-400 transition">
                                   {item.media?.title}
                                 </p>
-                                <p className="text-[11px] text-zinc-500 truncate">
+                                <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">
                                   {getMetricString(item)}
                                 </p>
                               </div>
                             </div>
                             <button
                               onClick={(e) => handleQuickIncrement(item.id, e)}
-                              className="px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-red-500/20 hover:text-red-300 text-[11px] font-semibold text-zinc-300 transition shrink-0"
+                              className="px-2 sm:px-2.5 py-1 rounded-full bg-white/[0.06] hover:bg-red-500/20 hover:text-red-300 text-[10px] sm:text-[11px] font-semibold text-zinc-300 transition shrink-0"
                             >
                               +1
                             </button>
@@ -1308,14 +1601,14 @@ export default function App() {
 
               {/* MIDDLE 4-COLUMN QUICK RESUME & HIGHLIGHTS STRIP */}
               {items.length > 0 && (
-                <section className="space-y-3">
+                <section className="space-y-2.5 sm:space-y-3">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                       <span>Quick Resume & Highlights</span>
-                      <span className="text-xs font-normal text-zinc-500">Top active & highest-rated entries</span>
+                      <span className="hidden sm:inline text-xs font-normal text-zinc-500">Top active & highest-rated entries</span>
                     </h2>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                     {items.slice(0, 4).map(item => {
                       const m = item.media || {};
                       const type = m.media_type;
@@ -1323,21 +1616,21 @@ export default function App() {
                         <div
                           key={`highlight-${item.id}`}
                           onClick={() => handleOpenEdit(item)}
-                          className="bg-[#201919] hover:bg-[#281f1f] border border-white/[0.06] hover:border-red-500/30 rounded-2xl p-3 flex items-center gap-3.5 cursor-pointer transition group"
+                          className="bg-[#201919] hover:bg-[#281f1f] border border-white/[0.06] hover:border-red-500/30 rounded-xl sm:rounded-2xl p-2.5 sm:p-3 flex items-center gap-3 sm:gap-3.5 cursor-pointer transition group"
                         >
                           <img
                             src={m.poster_url || m.backdrop_url}
                             alt={m.title}
-                            className="w-14 h-14 rounded-xl object-cover shrink-0 shadow"
+                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl object-cover shrink-0 shadow"
                           />
                           <div className="min-w-0 flex-1">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${TYPE_CONFIG[type]?.bg}`}>
+                            <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full ${TYPE_CONFIG[type]?.bg}`}>
                               {TYPE_CONFIG[type]?.icon} {TYPE_CONFIG[type]?.label.slice(0, -1) || type}
                             </span>
                             <h4 className="text-xs font-bold text-white truncate mt-1 group-hover:text-red-400 transition">
                               {m.title}
                             </h4>
-                            <p className="text-[11px] text-zinc-400 truncate">
+                            <p className="text-[10px] sm:text-[11px] text-zinc-400 truncate">
                               ★ {item.rating !== null ? item.rating : "—"} • {getMetricString(item)}
                             </p>
                           </div>
@@ -1349,16 +1642,16 @@ export default function App() {
               )}
 
               {/* POSTER GRID SECTION */}
-              <section className="space-y-4">
+              <section className="space-y-3.5 sm:space-y-4">
                 {/* Header & Tabs */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                  <h2 className="text-base font-bold text-white">
+                  <h2 className="text-sm sm:text-base font-bold text-white">
                     {TYPE_CONFIG[activeNav]?.label || "Collection"} Library ({filteredCollection.length})
                   </h2>
                 </div>
 
                 {/* Status Tabs */}
-                <div className="flex items-center gap-7 border-b border-white/[0.08] text-xs font-semibold overflow-x-auto">
+                <div className="flex items-center gap-4 sm:gap-7 border-b border-white/[0.08] text-xs font-semibold overflow-x-auto no-scrollbar py-0.5">
                   {[
                     { id: "all", label: "All Entries" },
                     { id: "in_progress", label: "In Progress" },
@@ -1370,7 +1663,7 @@ export default function App() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`pb-3 transition whitespace-nowrap border-b-2 ${
+                      className={`pb-2.5 sm:pb-3 transition whitespace-nowrap border-b-2 text-xs ${
                         activeTab === tab.id
                           ? "border-red-500 text-white font-bold"
                           : "border-transparent text-zinc-500 hover:text-zinc-300"
@@ -1383,8 +1676,8 @@ export default function App() {
 
                 {/* Grid Cards */}
                 {filteredCollection.length === 0 ? (
-                  <div className="py-16 text-center border border-dashed border-white/10 rounded-3xl p-8 space-y-3">
-                    <p className="text-sm font-semibold text-zinc-400">No media found matching this filter.</p>
+                  <div className="py-12 sm:py-16 text-center border border-dashed border-white/10 rounded-2xl sm:rounded-3xl p-6 sm:p-8 space-y-3">
+                    <p className="text-xs sm:text-sm font-semibold text-zinc-400">No media found matching this filter.</p>
                     <button
                       onClick={handleSeedDemo}
                       className="bg-red-500 hover:bg-red-600 text-white font-bold text-xs px-5 py-2.5 rounded-full transition"
@@ -1393,7 +1686,7 @@ export default function App() {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pt-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-5 pt-1">
                     {filteredCollection.map(item => {
                       const m = item.media || {};
                       const type = m.media_type;
@@ -1402,7 +1695,7 @@ export default function App() {
                         <div
                           key={item.id}
                           onClick={() => handleOpenEdit(item)}
-                          className="group relative h-60 rounded-[22px] overflow-hidden border border-white/10 hover:border-red-500/40 cursor-pointer shadow-lg transition-all duration-300"
+                          className="group relative h-52 sm:h-60 rounded-xl sm:rounded-[22px] overflow-hidden border border-white/10 hover:border-red-500/40 cursor-pointer shadow-lg transition-all duration-300"
                         >
                           <img
                             src={m.poster_url || m.backdrop_url}
@@ -1412,33 +1705,33 @@ export default function App() {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
                           {/* Top Badges */}
-                          <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-md ${TYPE_CONFIG[type]?.bg}`}>
+                          <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3 sm:left-3 sm:right-3 flex items-center justify-between">
+                            <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full backdrop-blur-md ${TYPE_CONFIG[type]?.bg}`}>
                               {TYPE_CONFIG[type]?.icon} {TYPE_CONFIG[type]?.label.slice(0, -1) || type}
                             </span>
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-amber-300 flex items-center gap-1">
+                            <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-black/60 backdrop-blur-md text-amber-300 flex items-center gap-1">
                               <Star className="w-3 h-3 fill-amber-300" />
                               <span>{item.rating !== null ? item.rating : "—"}</span>
                             </span>
                           </div>
 
                           {/* Bottom Info & Quick Increment */}
-                          <div className="absolute bottom-3.5 left-4 right-4 space-y-1.5">
-                            <p className="text-base font-extrabold text-white leading-tight truncate">
+                          <div className="absolute bottom-2.5 left-3 right-3 sm:bottom-3.5 sm:left-4 sm:right-4 space-y-1 sm:space-y-1.5">
+                            <p className="text-xs sm:text-base font-extrabold text-white leading-tight truncate">
                               {m.title}
                             </p>
-                            <div className="flex items-center justify-between text-[11px] text-zinc-300">
-                              <span className="truncate max-w-[150px]">{getMetricString(item)}</span>
-                              <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition">
+                            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-zinc-300">
+                              <span className="truncate max-w-[90px] sm:max-w-[150px]">{getMetricString(item)}</span>
+                              <div className="flex items-center gap-1 sm:gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                                 <button
                                   onClick={(e) => handleQuickIncrement(item.id, e)}
-                                  className="bg-red-500 hover:bg-red-600 text-white font-bold px-2.5 py-0.5 rounded-full text-[10px] transition"
+                                  className="bg-red-500 hover:bg-red-600 text-white font-bold px-2 py-0.5 rounded-full text-[10px] transition shrink-0"
                                 >
                                   +1
                                 </button>
                                 <button
                                   onClick={(e) => handleDeleteEntry(item.id, e)}
-                                  className="p-1 rounded-full bg-black/60 hover:bg-red-500/80 text-zinc-400 hover:text-white transition"
+                                  className="p-1 rounded-full bg-black/60 hover:bg-red-500/80 text-zinc-400 hover:text-white transition shrink-0"
                                   title="Delete entry"
                                 >
                                   <Trash2 className="w-3 h-3" />
@@ -1463,15 +1756,50 @@ export default function App() {
         </main>
       </div>
 
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#161111]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 py-1.5 md:hidden flex items-center justify-around shadow-2xl safe-area-bottom">
+        {[
+          { id: "all", label: "Home", icon: LayoutDashboard },
+          { id: "game", label: "Games", icon: Gamepad2 },
+          { id: "movie", label: "Movies", icon: Film },
+          { id: "stats", label: "Stats", icon: BarChart3 },
+          { id: "more", label: "Menu", icon: SlidersHorizontal },
+        ].map(item => {
+          const isMore = item.id === "more";
+          const isMoreActive = ["tv_show", "book", "import", "settings"].includes(activeNav);
+          const active = isMore ? isMoreActive : activeNav === item.id;
+          const IconComponent = item.icon;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                if (isMore) {
+                  setMobileMenuOpen(true);
+                } else {
+                  setActiveNav(item.id);
+                }
+              }}
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition ${
+                active ? "text-red-400 font-bold" : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              <IconComponent className={`w-5 h-5 ${active ? "text-red-400" : "text-zinc-400"}`} />
+              <span className="text-[10px] mt-0.5">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
       {/* ============================================================== */}
       {/* AUTH MODAL */}
       {/* ============================================================== */}
       {showAuthModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-[#201919] border border-white/10 rounded-3xl p-7 shadow-2xl relative space-y-5">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-md bg-[#201919] border border-white/10 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl relative space-y-4 sm:space-y-5">
             <button
               onClick={() => setShowAuthModal(false)}
-              className="absolute top-5 right-5 text-zinc-400 hover:text-white"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 text-zinc-400 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
@@ -1480,7 +1808,7 @@ export default function App() {
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center mx-auto shadow-lg shadow-red-500/30">
                 <span className="text-white font-black text-xl">H</span>
               </div>
-              <h3 className="text-xl font-bold text-white">
+              <h3 className="text-lg sm:text-xl font-bold text-white">
                 {authMode === "login" ? "Welcome Back to HostCart" : "Create HostCart Account"}
               </h3>
               <p className="text-xs text-zinc-400">
@@ -1494,7 +1822,7 @@ export default function App() {
               </div>
             )}
 
-            <form onSubmit={handleAuthSubmit} className="space-y-4">
+            <form onSubmit={handleAuthSubmit} className="space-y-3.5 sm:space-y-4">
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-zinc-300">Username</label>
                 <input
@@ -1561,24 +1889,24 @@ export default function App() {
       {/* ADD MEDIA MODAL (Live Search & Manual Form) */}
       {/* ============================================================== */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-[#201919] border border-white/10 rounded-3xl p-7 shadow-2xl relative space-y-6 max-h-[90vh] overflow-y-auto custom-scroll">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-2xl bg-[#201919] border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl relative space-y-5 sm:space-y-6 max-h-[88vh] overflow-y-auto custom-scroll">
             <button
               onClick={() => setShowAddModal(false)}
-              className="absolute top-5 right-5 text-zinc-400 hover:text-white"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 text-zinc-400 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-4 gap-3">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                 <Plus className="w-5 h-5 text-red-500" />
                 <span>Add Media Entry</span>
               </h3>
               <div className="flex gap-2">
                 <button
                   onClick={() => setAddTab("search")}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${
+                  className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold transition ${
                     addTab === "search" ? "bg-red-500 text-white" : "bg-white/5 text-zinc-400 hover:text-white"
                   }`}
                 >
@@ -1586,7 +1914,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setAddTab("manual")}
-                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${
+                  className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-bold transition ${
                     addTab === "manual" ? "bg-red-500 text-white" : "bg-white/5 text-zinc-400 hover:text-white"
                   }`}
                 >
@@ -1597,11 +1925,11 @@ export default function App() {
 
             {addTab === "search" ? (
               <div className="space-y-4">
-                <form onSubmit={handleExternalSearch} className="flex gap-2">
+                <form onSubmit={handleExternalSearch} className="flex flex-col sm:flex-row gap-2">
                   <select
                     value={searchType}
                     onChange={e => setSearchType(e.target.value)}
-                    className="bg-[#161212] border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
+                    className="w-full sm:w-auto bg-[#161212] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white"
                   >
                     <option value="game">🎮 Games (IGDB)</option>
                     <option value="movie">🎬 Movies (TMDB)</option>
@@ -1614,12 +1942,12 @@ export default function App() {
                     value={searchQueryTerm}
                     onChange={e => setSearchQueryTerm(e.target.value)}
                     placeholder="Search title e.g. Cyberpunk, Dune, Arcane..."
-                    className="flex-1 bg-[#161212] border border-white/10 rounded-xl px-4 py-2 text-xs text-white"
+                    className="flex-1 bg-[#161212] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white"
                   />
                   <button
                     type="submit"
                     disabled={isSearching}
-                    className="bg-red-500 hover:bg-red-600 text-white font-bold text-xs px-5 py-2 rounded-xl transition"
+                    className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition"
                   >
                     {isSearching ? "Searching..." : "Search"}
                   </button>
@@ -1635,25 +1963,25 @@ export default function App() {
                   {searchResults.map((res, i) => (
                     <div
                       key={i}
-                      className="flex items-center justify-between gap-4 bg-[#181313] border border-white/[0.06] p-3 rounded-2xl hover:border-red-500/40 transition"
+                      className="flex items-center justify-between gap-3 sm:gap-4 bg-[#181313] border border-white/[0.06] p-3 rounded-2xl hover:border-red-500/40 transition"
                     >
-                      <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
                         <img
                           src={res.poster_url || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=200&q=80"}
                           alt={res.title}
-                          className="w-12 h-16 rounded-xl object-cover shrink-0"
+                          className="w-11 h-14 sm:w-12 sm:h-16 rounded-xl object-cover shrink-0"
                         />
                         <div className="min-w-0">
-                          <p className="text-sm font-bold text-white truncate">{res.title}</p>
-                          <p className="text-xs text-zinc-400 truncate">
+                          <p className="text-xs sm:text-sm font-bold text-white truncate">{res.title}</p>
+                          <p className="text-[11px] sm:text-xs text-zinc-400 truncate">
                             {res.release_year || "Unknown Year"} • {res.genres?.slice(0, 2).join(", ") || "General"}
                           </p>
-                          <p className="text-[11px] text-zinc-500 truncate max-w-md">{res.summary}</p>
+                          <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate max-w-md">{res.summary}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => handleAddSearchResult(res)}
-                        className="bg-white hover:bg-zinc-200 text-black font-bold text-xs px-4 py-2 rounded-full transition shrink-0"
+                        className="bg-white hover:bg-zinc-200 text-black font-bold text-xs px-3.5 sm:px-4 py-2 rounded-full transition shrink-0"
                       >
                         + Add
                       </button>
@@ -1664,7 +1992,7 @@ export default function App() {
             ) : (
               /* MANUAL ADD FORM */
               <form onSubmit={handleManualAddSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-zinc-300">Title</label>
                     <input
@@ -1691,7 +2019,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-zinc-300">Creator / Studio</label>
                     <input
@@ -1726,7 +2054,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-zinc-300">Poster Image URL</label>
                     <input
@@ -1776,31 +2104,31 @@ export default function App() {
       {/* EDIT / DETAIL MODAL */}
       {/* ============================================================== */}
       {selectedItem && editForm && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-[#201919] border border-white/10 rounded-3xl p-7 shadow-2xl relative space-y-5">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+          <div className="w-full max-w-xl bg-[#201919] border border-white/10 rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl relative space-y-4 sm:space-y-5 max-h-[88vh] overflow-y-auto custom-scroll">
             <button
               onClick={() => setSelectedItem(null)}
-              className="absolute top-5 right-5 text-zinc-400 hover:text-white"
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 text-zinc-400 hover:text-white"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-4 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3.5 sm:gap-4 border-b border-white/10 pb-4">
               <img
                 src={selectedItem.media?.poster_url}
                 alt={selectedItem.media?.title}
-                className="w-14 h-20 rounded-xl object-cover"
+                className="w-12 h-16 sm:w-14 sm:h-20 rounded-xl object-cover"
               />
               <div>
-                <h3 className="text-lg font-bold text-white">{selectedItem.media?.title}</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white">{selectedItem.media?.title}</h3>
                 <p className="text-xs text-zinc-400">
                   {TYPE_CONFIG[selectedItem.media?.media_type]?.label} • {selectedItem.media?.release_year}
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSaveEdit} className="space-y-3.5 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-zinc-300">Status</label>
                   <select
@@ -1830,7 +2158,7 @@ export default function App() {
               </div>
 
               {/* Progress metric specific to type */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {selectedItem.media?.media_type === "game" && (
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-zinc-300">Playtime (Hours)</label>
@@ -1898,11 +2226,11 @@ export default function App() {
                 />
               </div>
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => handleDeleteEntry(selectedItem.id)}
-                  className="text-red-400 hover:text-red-300 text-xs font-semibold flex items-center gap-1.5"
+                  className="text-red-400 hover:text-red-300 text-xs font-semibold flex items-center justify-center sm:justify-start gap-1.5 py-1"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Remove from Collection</span>

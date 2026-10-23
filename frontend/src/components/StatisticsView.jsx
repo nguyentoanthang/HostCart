@@ -147,9 +147,9 @@ export default function StatisticsView({ fallbackItems = [] }) {
   return (
     <div className="space-y-6">
       {/* Header & Media Filter Pills */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold text-white flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
             <span>Statistics & Media Analytics</span>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30">
               Live Engine
@@ -159,7 +159,7 @@ export default function StatisticsView({ fallbackItems = [] }) {
             Unified breakdown of your Playing, Watching, and Reading habits
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-[#221b1b] p-1.5 rounded-full border border-white/10">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-[#221b1b] p-1.5 rounded-full border border-white/10 overflow-x-auto no-scrollbar max-w-full">
           {[
             { id: "all", label: "All Media" },
             { id: "game", label: "🎮 Playing" },
@@ -169,7 +169,7 @@ export default function StatisticsView({ fallbackItems = [] }) {
             <button
               key={f.id}
               onClick={() => setStatFilter(f.id)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition ${
+              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap ${
                 statFilter === f.id
                   ? "bg-gradient-to-r from-red-500 to-rose-600 text-white shadow"
                   : "text-zinc-400 hover:text-white"
@@ -182,78 +182,78 @@ export default function StatisticsView({ fallbackItems = [] }) {
       </div>
 
       {/* 4 TOP KPI SUMMARY CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Gaming */}
-        <div className="bg-[#201919] border border-white/[0.08] hover:border-red-500/30 transition rounded-3xl p-5 space-y-2 relative overflow-hidden group">
+        <div className="bg-[#201919] border border-white/[0.08] hover:border-red-500/30 transition rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2 relative overflow-hidden group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
-              <span>🎮</span> Gaming Time
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-red-400 flex items-center gap-1">
+              <span>🎮</span> Gaming
             </span>
-            <span className="text-xs bg-red-500/20 text-red-300 px-2.5 py-0.5 rounded-full font-semibold">
-              {s.game_hours}h Logged
+            <span className="text-[10px] sm:text-xs bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full font-semibold">
+              {s.game_hours}h
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-white">
-            {s.game_hours} <span className="text-sm font-semibold text-zinc-400">hrs</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-white">
+            {s.game_hours} <span className="text-xs sm:text-sm font-semibold text-zinc-400">hrs</span>
           </p>
-          <p className="text-xs text-zinc-400">
-            {s.media_type_counts?.game || fallbackItems.filter(i => (i.media?.media_type || i.type) === "game").length} Games tracked in library
+          <p className="text-[11px] sm:text-xs text-zinc-400 line-clamp-1 sm:line-clamp-none">
+            {s.media_type_counts?.game || fallbackItems.filter(i => (i.media?.media_type || i.type) === "game").length} Games tracked
           </p>
         </div>
 
         {/* Card 2: Screen Time */}
-        <div className="bg-[#201919] border border-white/[0.08] hover:border-amber-500/30 transition rounded-3xl p-5 space-y-2 group">
+        <div className="bg-[#201919] border border-white/[0.08] hover:border-amber-500/30 transition rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2 group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-              <span>🎬📺</span> Screen Time
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+              <span>🎬📺</span> Screen
             </span>
-            <span className="text-xs bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full font-semibold">
+            <span className="text-[10px] sm:text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-semibold">
               {s.episodes_watched} Eps
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-white">
+          <p className="text-2xl sm:text-3xl font-extrabold text-white">
             {(s.movie_hours + s.tv_hours).toFixed(1)}{" "}
-            <span className="text-sm font-semibold text-zinc-400">hrs</span>
+            <span className="text-xs sm:text-sm font-semibold text-zinc-400">hrs</span>
           </p>
-          <p className="text-xs text-zinc-400">
-            {s.movie_hours}h Movies • {s.tv_hours}h TV Series
+          <p className="text-[11px] sm:text-xs text-zinc-400 line-clamp-1 sm:line-clamp-none">
+            {s.movie_hours}h Movies • {s.tv_hours}h TV
           </p>
         </div>
 
         {/* Card 3: Reading Volume */}
-        <div className="bg-[#201919] border border-white/[0.08] hover:border-emerald-500/30 transition rounded-3xl p-5 space-y-2 group">
+        <div className="bg-[#201919] border border-white/[0.08] hover:border-emerald-500/30 transition rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2 group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-              <span>📚</span> Reading Volume
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+              <span>📚</span> Reading
             </span>
-            <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full font-semibold">
-              ~{s.book_hours}h read
+            <span className="text-[10px] sm:text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-semibold">
+              ~{s.book_hours}h
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-white">
-            {s.pages_read} <span className="text-sm font-semibold text-zinc-400">pages</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-white">
+            {s.pages_read} <span className="text-xs sm:text-sm font-semibold text-zinc-400">pg</span>
           </p>
-          <p className="text-xs text-zinc-400">
-            Avg 35 pages/hr • {s.media_type_counts?.book || fallbackItems.filter(i => (i.media?.media_type || i.type) === "book").length} Books tracked
+          <p className="text-[11px] sm:text-xs text-zinc-400 line-clamp-1 sm:line-clamp-none">
+            Avg 35 p/h • {s.media_type_counts?.book || fallbackItems.filter(i => (i.media?.media_type || i.type) === "book").length} Books
           </p>
         </div>
 
         {/* Card 4: Curator Score & Level */}
-        <div className="bg-[#201919] border border-white/[0.08] hover:border-purple-500/30 transition rounded-3xl p-5 space-y-2 group">
+        <div className="bg-[#201919] border border-white/[0.08] hover:border-purple-500/30 transition rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 space-y-1.5 sm:space-y-2 group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
-              <span>★</span> Curator Score
+            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1">
+              <span>★</span> Score
             </span>
-            <span className="text-xs bg-purple-500/20 text-purple-300 px-2.5 py-0.5 rounded-full font-semibold">
-              Lv. {s.curator_level || 7} • {s.completion_rate}% Done
+            <span className="text-[10px] sm:text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-semibold">
+              Lv. {s.curator_level || 7}
             </span>
           </div>
-          <p className="text-3xl font-extrabold text-white">
+          <p className="text-2xl sm:text-3xl font-extrabold text-white">
             {s.avg_rating > 0 ? s.avg_rating : "—"}{" "}
-            <span className="text-sm font-semibold text-zinc-400">/ 10</span>
+            <span className="text-xs sm:text-sm font-semibold text-zinc-400">/ 10</span>
           </p>
-          <p className="text-xs text-zinc-400">
-            {completed} Finished • {inProgress} Active • {planTo} Backlog
+          <p className="text-[11px] sm:text-xs text-zinc-400 line-clamp-1 sm:line-clamp-none">
+            {completed} Finished • {inProgress} Active
           </p>
         </div>
       </div>
@@ -281,45 +281,47 @@ export default function StatisticsView({ fallbackItems = [] }) {
           </div>
 
           {/* Grouped Bar Columns */}
-          <div className="grid grid-cols-6 gap-4 items-end h-52 pt-4 px-2 border-b border-white/10">
-            {monthlyList.map((m, idx) => {
-              const watchingHours = (m.movies || 0) + (m.tv || 0);
-              const gPct = Math.min(100, Math.round(((m.games || 0) / maxMonthlyVal) * 100));
-              const wPct = Math.min(100, Math.round((watchingHours / maxMonthlyVal) * 100));
-              const rPct = Math.min(100, Math.round(((m.books || 0) / maxMonthlyVal) * 100));
+          <div className="overflow-x-auto custom-scroll pb-2">
+            <div className="min-w-[340px] sm:min-w-0 grid grid-cols-6 gap-2 sm:gap-4 items-end h-52 pt-4 px-2 border-b border-white/10">
+              {monthlyList.map((m, idx) => {
+                const watchingHours = (m.movies || 0) + (m.tv || 0);
+                const gPct = Math.min(100, Math.round(((m.games || 0) / maxMonthlyVal) * 100));
+                const wPct = Math.min(100, Math.round((watchingHours / maxMonthlyVal) * 100));
+                const rPct = Math.min(100, Math.round(((m.books || 0) / maxMonthlyVal) * 100));
 
-              return (
-                <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end group">
-                  <div className="w-full flex items-end justify-center gap-1.5 h-40">
-                    {/* Gaming Bar */}
-                    <div
-                      style={{ height: `${Math.max(4, gPct)}%` }}
-                      title={`${m.games || 0} Gaming`}
-                      className={`w-3 bg-gradient-to-t from-red-600 to-rose-400 rounded-t-md transition-all group-hover:brightness-125 ${
-                        statFilter !== "all" && statFilter !== "game" ? "opacity-25" : ""
-                      }`}
-                    />
-                    {/* Watching Bar */}
-                    <div
-                      style={{ height: `${Math.max(4, wPct)}%` }}
-                      title={`${watchingHours} Watching`}
-                      className={`w-3 bg-gradient-to-t from-amber-500 to-yellow-300 rounded-t-md transition-all group-hover:brightness-125 ${
-                        statFilter !== "all" && statFilter !== "watching" ? "opacity-25" : ""
-                      }`}
-                    />
-                    {/* Reading Bar */}
-                    <div
-                      style={{ height: `${Math.max(4, rPct)}%` }}
-                      title={`${m.books || 0} Reading`}
-                      className={`w-3 bg-gradient-to-t from-emerald-600 to-teal-300 rounded-t-md transition-all group-hover:brightness-125 ${
-                        statFilter !== "all" && statFilter !== "book" ? "opacity-25" : ""
-                      }`}
-                    />
+                return (
+                  <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end group">
+                    <div className="w-full flex items-end justify-center gap-1 sm:gap-1.5 h-40">
+                      {/* Gaming Bar */}
+                      <div
+                        style={{ height: `${Math.max(4, gPct)}%` }}
+                        title={`${m.games || 0} Gaming`}
+                        className={`w-2.5 sm:w-3 bg-gradient-to-t from-red-600 to-rose-400 rounded-t-md transition-all group-hover:brightness-125 ${
+                          statFilter !== "all" && statFilter !== "game" ? "opacity-25" : ""
+                        }`}
+                      />
+                      {/* Watching Bar */}
+                      <div
+                        style={{ height: `${Math.max(4, wPct)}%` }}
+                        title={`${watchingHours} Watching`}
+                        className={`w-2.5 sm:w-3 bg-gradient-to-t from-amber-500 to-yellow-300 rounded-t-md transition-all group-hover:brightness-125 ${
+                          statFilter !== "all" && statFilter !== "watching" ? "opacity-25" : ""
+                        }`}
+                      />
+                      {/* Reading Bar */}
+                      <div
+                        style={{ height: `${Math.max(4, rPct)}%` }}
+                        title={`${m.books || 0} Reading`}
+                        className={`w-2.5 sm:w-3 bg-gradient-to-t from-emerald-600 to-teal-300 rounded-t-md transition-all group-hover:brightness-125 ${
+                          statFilter !== "all" && statFilter !== "book" ? "opacity-25" : ""
+                        }`}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-400 pb-2">{m.month}</span>
                   </div>
-                  <span className="text-xs font-semibold text-zinc-400 pb-2">{m.month}</span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
           <div className="flex items-center justify-between text-xs text-zinc-400 pt-3">
@@ -333,7 +335,7 @@ export default function StatisticsView({ fallbackItems = [] }) {
         </div>
 
         {/* Right 5 Cols: Time Allocation & Status Breakdown */}
-        <div className="lg:col-span-5 bg-[#201919] border border-white/[0.08] rounded-3xl p-6 flex flex-col justify-between space-y-5">
+        <div className="lg:col-span-5 bg-[#201919] border border-white/[0.08] rounded-3xl p-4 sm:p-6 flex flex-col justify-between space-y-5">
           <div>
             <h3 className="text-base font-bold text-white">Time Invested by Media Type</h3>
             <p className="text-xs text-zinc-400">
@@ -369,7 +371,7 @@ export default function StatisticsView({ fallbackItems = [] }) {
           </div>
 
           {/* Status Pipeline Cards */}
-          <div className="pt-3 border-t border-white/[0.06] grid grid-cols-4 gap-2 text-center">
+          <div className="pt-3 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
             <div className="bg-[#161111] border border-white/[0.04] rounded-2xl p-2.5">
               <p className="text-lg font-extrabold text-emerald-400">{completed}</p>
               <p className="text-[10px] text-zinc-400 uppercase font-bold">Completed</p>
